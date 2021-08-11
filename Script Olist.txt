@@ -1,0 +1,866 @@
+# Carregamos a sessão do spark, funções do pyspark.sql, pandas para puxar os dados do github e algumas estruturas para a criação de schemas das tabelas. 
+# Agora vamos carregar os dados em dataframes pandas e converte-los em dataframes spark.
+
+import pandas
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import StructType, StructField, StringType
+spark = SparkSession.builder.appName("data-ingestion").getOrCreate()
+
+# paths
+pathStage = "dbfs:/FileStore/project/olist/stage"
+pathBronze = "dbfs:/FileStore/project/olist/bronze"
+pathSilver = "dbfs:/FileStore/project/olist/silver"
+pathGold = "dbfs:/FileStore/project/olist/gold"
+
+# Carrega dados da origem que nesse caso é o https://github.com/olist/work-at-olist-data/tree/master/datasets em dataframes
+
+customers = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_customers_dataset.csv")
+    )
+)
+geolocation = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_geolocation_dataset.csv")
+    )
+)
+order_items = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_items_dataset.csv")
+    )
+)
+order_payments = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_payments_dataset.csv")
+    )
+)
+order_reviews = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_reviews_dataset.csv")
+    )
+)
+orders = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_orders_dataset.csv")
+    )
+)
+products = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_products_dataset.csv")
+    )
+)
+sellers = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_sellers_dataset.csv")
+    )
+)
+category = (
+    spark.createDataFrame(
+        pandas.read_csv("https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv")
+    )
+)
+
+(
+    customers
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/customers/customers.csv")
+)
+(
+    geolocation
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/geolocation/geolocation.csv")
+)
+(
+    order_items
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/order_items/order_items.csv")
+)
+(
+    order_payments
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/order_payments/order_payments.csv")
+)
+(
+    order_reviews
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/order_reviews/order_reviews.csv")
+)
+(
+    orders
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/orders/orders.csv")
+)
+(
+    products
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/products/products.csv")
+)
+(
+    sellers
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/sellers/sellers.csv")
+)
+(
+    category
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/category/category.csv")
+)
+
+# Escreve os dataframes lidos da origem para o Stage Area
+
+
+(
+    customers
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/customers/customers.csv")
+)
+(
+    geolocation
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/geolocation/geolocation.csv")
+)
+(
+    order_items
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/order_items/order_items.csv")
+)
+(
+    order_payments
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/order_payments/order_payments.csv")
+)
+(
+    order_reviews
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/order_reviews/order_reviews.csv")
+)
+(
+    orders
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/orders/orders.csv")
+)
+(
+    products
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/products/products.csv")
+)
+(
+    sellers
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/sellers/sellers.csv")
+)
+(
+    category
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .save(f"{pathStage}/category/category.csv")
+)
+
+# Criação dos schemas para as tabelas
+
+customers_schema = (
+    StructType([
+		StructField("customerId", StringType(), True),
+		StructField("customerUniqueId", StringType(), True),
+		StructField("customerZipCodePrefix", StringType(), True),
+		StructField("customerCity", StringType(), True),
+		StructField("customerState", StringType(), True),
+    ])
+)
+
+geolocation_schema = (
+    StructType([
+		StructField("geolocationCodePrefix", StringType(), True),
+		StructField("geolocationLat", StringType(), True),
+		StructField("geolocationLng", StringType(), True),
+		StructField("geolocationCity", StringType(), True),
+		StructField("geolocationState", StringType(), True),
+    ])
+)
+
+order_items_schema = (
+    StructType([
+		StructField("orderId", StringType(), True),
+		StructField("orderItemId", StringType(), True),
+		StructField("productId", StringType(), True),
+		StructField("sellerId", StringType(), True),
+		StructField("shippingLimitDate", StringType(), True),
+		StructField("price", StringType(), True),
+		StructField("freightValue", StringType(), True),
+    ])
+)
+
+order_payments_schema = (
+    StructType([
+		StructField("orderId", StringType(), True),
+		StructField("paymentSequential", StringType(), True),
+		StructField("paymentType", StringType(), True),
+		StructField("paymentInstallments", StringType(), True),
+		StructField("paymentValue", StringType(), True),
+    ])
+)
+
+order_reviews_schema = (
+    StructType([
+		StructField("reviewId", StringType(), True),
+		StructField("orderId", StringType(), True),
+		StructField("reviewScore", StringType(), True),
+		StructField("reviewCommentTitle", StringType(), True),
+		StructField("reviewCommentMessage", StringType(), True),
+		StructField("reviewCreationDate", StringType(), True),
+		StructField("reviewAnswerTimestamp", StringType(), True),
+    ])
+)
+
+orders_schema = (
+    StructType([
+		StructField("orderId", StringType(), True),
+		StructField("customerId", StringType(), True),
+		StructField("orderStatus", StringType(), True),
+		StructField("orderPurchaseTimestamp", StringType(), True),
+		StructField("orderApprovedAt", StringType(), True),
+		StructField("orderDeliveredCarrierDate", StringType(), True),
+		StructField("orderDeliveredCustomerDate", StringType(), True),
+		StructField("orderEstimatedDeliveryDate", StringType(), True),
+    ])
+)
+
+products_schema = (
+    StructType([
+		StructField("productId", StringType(), True),
+		StructField("productCategoryName", StringType(), True),
+		StructField("productNameLenght", StringType(), True),
+		StructField("productDescriptionLenght", StringType(), True),
+		StructField("productPhotosQty", StringType(), True),
+		StructField("productWeight_g", StringType(), True),
+		StructField("productLength_cm", StringType(), True),
+		StructField("productHeight_cm", StringType(), True),
+		StructField("productWidth_cm", StringType(), True),
+    ])
+)
+
+sellers_schema = (
+    StructType([
+		StructField("sellerId", StringType(), True),
+		StructField("sellerCodePrefix", StringType(), True),
+		StructField("sellerCity", StringType(), True),
+		StructField("sellerState", StringType(), True),
+    ])
+)
+
+category_schema = (
+    StructType([
+		StructField("productCategory", StringType(), True),
+		StructField("productCategoryNameInglish", StringType(), True),
+    ])
+)
+
+# Carrega dados da camanda Stage Area para a Bronze Zone
+
+customersBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(customers_schema)
+    .load(f"{pathStage}/customers/customers.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    customersBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/customers")
+)
+
+geolocationBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(geolocation_schema)
+    .load(f"{pathStage}/geolocation/geolocation.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    geolocationBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/geolocation")
+)
+
+order_itemsBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(order_items_schema)
+    .load(f"{pathStage}/order_items/order_items.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    order_itemsBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/order_items")
+)
+
+order_paymentsBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(order_payments_schema)
+    .load(f"{pathStage}/order_payments/order_payments.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    order_paymentsBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/order_payments")
+)
+
+order_reviewsBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(order_reviews_schema)
+    .load(f"{pathStage}/order_reviews/order_reviews.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    order_reviewsBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/order_reviews")
+)
+
+ordersBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(orders_schema)
+    .load(f"{pathStage}/orders/orders.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    ordersBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/orders")
+)
+
+productsBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(products_schema)
+    .load(f"{pathStage}/products/products.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    productsBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/products")
+)
+
+sellersBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(sellers_schema)
+    .load(f"{pathStage}/sellers/sellers.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    sellersBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/sellers")
+)
+
+categoryBronze = (
+    spark
+    .read
+    .format("csv")
+    .schema(category_schema)
+    .load(f"{pathStage}/category/category.csv")
+    .withColumn("loadingDateStage", current_timestamp())
+)
+(
+    categoryBronze
+        .write
+        .format("delta")
+        .mode("append")
+        .save(f"{pathBronze}/category")
+)
+
+# Carrega dados da camanda Bronze Zone selecionando apenas a última versão da linha inserida/atualizada das tabelas
+
+customersSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(customerId AS STRING) AS customerId,
+            CAST(customerUniqueId AS STRING) customerUniqueId,
+            CAST(customerZipCodePrefix AS INTEGER) AS customerZipCodePrefix,
+            CAST(customerCity AS STRING) AS customerCity,
+            LOWER(CAST(customerState AS STRING)) AS customerState,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/customers`
+          ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+    customersSilver
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .save(f"{pathSilver}/customers")
+)
+
+geolocationSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(geolocationCodePrefix AS INTEGER) AS geolocationCodePrefix,
+            CAST(geolocationLat AS STRING) geolocationLat,
+            CAST(geolocationLng AS STRING) AS geolocationLng,
+            CAST(geolocationCity AS STRING) AS geolocationCity,
+            CAST(geolocationState AS STRING) AS geolocationState,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/geolocation`
+          ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+geolocationSilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/geolocation")
+)
+
+order_itemsSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(orderId AS STRING) AS orderId,
+            CAST(orderItemId AS INTEGER) orderItemId,
+            CAST(productId AS STRING) AS productId,
+            CAST(sellerId AS STRING) AS sellerId,
+            CAST(shippingLimitDate AS TIMESTAMP) AS shippingLimitDate,
+            CAST(price AS DOUBLE) AS price,
+            CAST(freightValue AS DOUBLE) AS freightValue,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/order_items`
+          ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+order_itemsSilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/order_items")
+)
+
+order_paymentsSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(orderId AS STRING) AS orderId,
+            CAST(paymentSequential AS INTEGER) paymentSequential,
+            CAST(paymentType AS STRING) AS paymentType,
+            CAST(paymentInstallments AS INTEGER) AS paymentInstallments,
+            CAST(paymentValue AS DOUBLE) AS paymentValue,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/order_payments`
+          ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+order_paymentsSilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/order_payments")
+)
+
+order_reviewsSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(reviewId AS STRING) AS reviewId,
+            CAST(orderId AS STRING) AS orderId,
+            CAST(reviewScore AS INTEGER) AS reviewScore,
+            CAST(reviewCommentTitle AS STRING) AS reviewCommentTitle,
+            CAST(reviewCommentMessage AS STRING) AS reviewCommentMessage,
+            CAST(reviewCreationDate AS TIMESTAMP) AS reviewCreationDate,
+            CAST(reviewAnswerTimestamp AS TIMESTAMP) AS reviewAnswerTimestamp,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/order_reviews`
+          ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+order_reviewsSilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/order_reviews")
+)
+
+ordersSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(orderId AS STRING) AS orderId,
+            CAST(customerId AS STRING) AS customerId,
+            CAST(orderStatus AS STRING) AS orderStatus,
+            CAST(orderPurchaseTimestamp AS TIMESTAMP) AS orderPurchaseTimestamp,
+            CAST(orderApprovedAt AS TIMESTAMP) AS orderApprovedAt,
+            CAST(orderDeliveredCarrierDate AS TIMESTAMP) AS orderDeliveredCarrierDate,
+            CAST(orderDeliveredCustomerDate AS TIMESTAMP) AS orderDeliveredCustomerDate,
+            CAST(orderEstimatedDeliveryDate AS TIMESTAMP) AS orderEstimatedDeliveryDate,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/orders`
+          ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+ordersSilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/orders")
+)
+
+productsSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(productId AS STRING) AS productId,
+            CAST(productCategoryName AS STRING) AS productCategoryName,
+            CAST(productNameLenght AS DOUBLE) AS productNameLenght,
+            CAST(productDescriptionLenght AS DOUBLE) AS productDescriptionLenght,
+            CAST(productPhotosQty AS DOUBLE) AS productPhotosQty,
+            CAST(productWeight_g AS DOUBLE) AS productWeight_g,
+            CAST(productLength_cm AS DOUBLE) AS productLength_cm,
+            CAST(productHeight_cm AS DOUBLE) AS productHeight_cm,
+            CAST(productWidth_cm AS DOUBLE) AS productWidth_cm,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/products`
+           ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+productsSilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/products")
+)
+
+sellersSilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(sellerId AS STRING) AS sellerId,
+            CAST(sellerCodePrefix AS INTEGER) AS sellerCodePrefix,
+            CAST(sellerCity AS STRING) AS sellerCity,
+            CAST(sellerState AS STRING) AS sellerState,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                DENSE_RANK() OVER(ORDER BY loadingDateStage DESC) AS rank, * 
+            FROM delta.`{pathBronze}/sellers`
+          ) AS T
+       WHERE
+            T.rank = 1
+       ''')
+)
+(
+sellersSilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/sellers")
+)
+
+categorySilver = (
+    spark.sql(f'''
+       SELECT
+            CAST(productCategory AS STRING) AS productCategory,
+            CAST(productCategoryNameInglish AS STRING) AS productCategoryNameInglish,
+            CAST(loadingDateStage AS TIMESTAMP) AS loadingDateStage
+       FROM
+          (
+            SELECT 
+                dense_rank() over(order by loadingDateStage desc) as rank, * 
+            FROM delta.`{pathBronze}/category`
+          ) AS T
+       WHERE
+            T.rank = 1
+        ''')
+)
+(
+categorySilver
+    .write
+    .format("delta")
+    .mode("overwrite")
+    .save(f"{pathSilver}/category")
+)
+
+#Agora que temos a nossa fonte de verdade silver-zone podemos criar várias tabelas com JOINS, funções etc.. na gold-zone a partir da mesma. Vamos então criar uma tabela de chamada “vendas” que vai ser o resultado da união das tabelas:delta.`dbfs:/FileStore/project/olist/silver/order_payments`, delta.`dbfs:/FileStore/project/olist/silver/order_reviews`, delta.`dbfs:/FileStore/project/olist/silver/customers e para fazer nossas análises e gerar gráficos, vamos usar o usando SQL Analytics
+
+# Cria tabelas sales na camada gold zone para análise dos dados
+
+%sql
+
+CREATE OR REPLACE TABLE delta.`dbfs:/FileStore/project/olist/gold/sales` 
+USING DELTA PARTITIONED BY (estadoCliente) 
+(
+  SELECT
+    CASE
+      WHEN orders.orderStatus = 'shipped' THEN 'enviado'
+      WHEN orders.orderStatus = 'canceled' THEN 'cancelado'
+      WHEN orders.orderStatus = 'invoiced' THEN 'faturado'
+      WHEN orders.orderStatus = 'created' THEN 'criado'
+      WHEN orders.orderStatus = 'delivered' THEN 'entregue'
+      WHEN orders.orderStatus = 'unavailable' THEN 'indisponível'
+      WHEN orders.orderStatus = 'processing' THEN 'em processamento'
+      WHEN orders.orderStatus = 'approved' THEN 'aprovado'
+      END AS statusDoPedido,
+    orders.orderPurchaseTimestamp AS horaCompraPedido,
+    orders.orderApprovedAt AS horaPedidoAprovado,
+    orders.orderEstimatedDeliveryDate AS dataEstimadaEntrega,
+    DATEDIFF(
+      orders.orderEstimatedDeliveryDate,
+      orders.orderApprovedAt
+    )AS dataEntregaEmDias,
+    order_reviews.reviewScore AS notaProduto,
+    order_reviews.reviewAnswerTimestamp AS dataComentarioSobreProduto,
+    CASE
+      WHEN order_payments.paymentType = 'credit_card' THEN 'cartao_de_credito'
+      WHEN order_payments.paymentType = 'boleto' THEN 'boleto'
+      WHEN order_payments.paymentType = 'not_defined' THEN 'não_definido'
+      WHEN order_payments.paymentType = 'voucher' THEN 'voucher'
+      WHEN order_payments.paymentType = 'debit_card' THEN 'cartao_de_debito'
+    END AS meioDePagamento,
+    order_payments.paymentInstallments AS parcelamento,
+    order_payments.paymentValue AS valorPago,
+    customers.customerCity AS cidadeCliente,
+    customers.customerState AS estadoCliente
+  FROM
+    delta.`dbfs:/FileStore/project/olist/silver/orders` orders
+    LEFT JOIN delta.`dbfs:/FileStore/project/olist/silver/order_payments` 
+        order_payments ON order_payments.orderId = orders.orderId
+    LEFT JOIN delta.`dbfs:/FileStore/project/olist/silver/order_reviews` 
+        order_reviews ON order_reviews.orderId = orders.orderId
+    LEFT JOIN delta.`dbfs:/FileStore/project/olist/silver/customers` 
+        customers ON customers.customerId = orders.customerId
+)
+
+# Média de compras por meio de pagamento
+
+%sql
+SELECT
+  estadoCliente AS estados,
+  meioDePagamento AS `meio de pagamento`,
+  count(*) AS `percentual de uso`
+FROM
+  delta.`dbfs:/FileStore/project/olist/gold/sales`
+WHERE
+  meioDePagamento IS NOT NULL
+  AND YEAR(horaPedidoAprovado) IS NOT NULL
+  AND statusDoPedido = "entregue"
+GROUP BY
+  estadoCliente,
+  meioDePagamento
+
+# Média de dia para entrega de produtos
+
+%sql
+SELECT
+  T.estadoCliente AS estados,
+  T.diasEntrega AS `média de dias para entrega de produto`
+FROM
+  (
+    SELECT
+      estadoCliente,
+      ROUND(AVG(dataEntregaEmDias), 0) AS DiasEntrega
+    FROM
+      delta.`dbfs:/FileStore/project/olist/gold/sales`
+    WHERE
+      meioDePagamento IS NOT NULL
+      AND YEAR(horaPedidoAprovado) IS NOT NULL
+      AND statusDoPedido <> "cancelado"
+    GROUP BY
+      estadoCliente
+  ) AS T
+
+# Parcelamento de compras por estado onde o número de parcelas é >= 15x
+
+%sql
+SELECT
+  estadoCliente AS estados,
+  parcelamento,
+  YEAR(horaPedidoAprovado) AS ano,
+  Count(*) AS ocorrencias
+FROM
+  delta.`dbfs:/FileStore/project/olist/gold/sales`
+WHERE
+  Parcelamento >= 15
+  AND meioDePagamento IS NOT NULL
+  AND YEAR(horaPedidoAprovado) IS NOT NULL
+  AND statusDoPedido = "entregue"
+GROUP BY
+  estadoCliente,
+  parcelamento,
+  YEAR(horaPedidoAprovado)
+
+# Estados que mais compraram por ano
+
+%sql
+
+SELECT
+  estadoCliente AS `estado do cliente`,
+  YEAR(horaPedidoAprovado) AS `ano da compra`,
+  Count(*) AS `número de compras`
+FROM
+  delta.`dbfs:/FileStore/project/olist/gold/sales`
+WHERE
+  meioDePagamento IS NOT NULL
+  AND YEAR(horaPedidoAprovado) IS NOT NULL
+  AND StatusDoPedido = "entregue"
+GROUP BY
+  estadoCliente,
+  YEAR(horaPedidoAprovado)
+
+# Vendas canceladas por estado
+
+%sql
+
+SELECT
+  estadoCliente AS `estados`,
+  YEAR(horaPedidoAprovado) AS `ano da compra`,
+  Count(*) AS `número de compras canceladas`
+FROM
+  delta.`dbfs:/FileStore/project/olist/gold/sales`
+WHERE
+  MeioDePagamento IS NOT NULL
+  AND YEAR(horaCompraPedido) IS NOT NULL
+  AND statusDoPedido = "cancelado"
+GROUP BY
+  estadoCliente,
+  YEAR(horaPedidoAprovado)
+HAVING
+  YEAR(horaPedidoAprovado) > 1
+
+# Compras da blackFriday e natal por estados que compraram entre 1.000 a 50.000 R$
+
+%sql
+
+SELECT
+  estadoCliente AS `estados`,
+  CASE
+    WHEN CAST(horaPedidoAprovado AS DATE) BETWEEN '2017-11-24'
+    AND '2017-11-26' THEN 'Black Friday'
+    WHEN CAST(horaPedidoAprovado AS DATE) BETWEEN '2017-12-24'
+    AND '2017-12-26' THEN 'Natal'
+  END AS `data festiva`,
+  ROUND(SUM(valorPago), 2) AS `total de compras`
+FROM
+  delta.`dbfs:/FileStore/project/olist/gold/sales`
+WHERE
+  meioDePagamento IS NOT NULL
+  AND YEAR(horaCompraPedido) IS NOT NULL
+  AND StatusDoPedido = "entregue"
+  AND CAST(horaPedidoAprovado AS DATE) BETWEEN '2017-11-24'
+  AND '2017-11-26'
+  OR CAST(horaPedidoAprovado AS DATE) BETWEEN '2017-12-24'
+  AND '2017-12-26'
+GROUP BY
+  estadoCliente,
+  `data festiva`
+HAVING
+  `total de compras` BETWEEN 1000
+  AND 50000
